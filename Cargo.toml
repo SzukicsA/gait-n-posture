@@ -1,0 +1,8 @@
+[package]
+name = "shimmer_bluetooth_scanner"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bluer = "0.17.3"
+tokio = "1.44.2"
