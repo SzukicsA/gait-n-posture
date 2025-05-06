@@ -1,8 +1,8 @@
 [package]
-name = "shimmer_bluetooth_scanner"
-version = "0.1.0"
-edition = "2024"
+name = "bluetooth_scanner_test" # name of my project
+version = "0.1.0"               # version of my package (0.1.0 mean unstable and first attempt
+edition = "2024"                # this defines the Rust edition. Rust is backwards-compatible but errors can occure. in that case I should use an older edition
 
 [dependencies]
-bluer = "0.17.3"
-tokio = "1.44.2"
+btleplug = "0.11.8"             # The Bluetooth scanner and connector
+tokio = "1.44.2"                # The engine that makes async code run
