@@ -1,15 +1,27 @@
-fn main() {
-    println!("Hello, bluetooth!");
+use btleplug::platform::Manager;                        // for Bluetooth manager
+use tokio::time::{sleep, Duration};                     // for pause/wait
+
+fn start() {
+    println!("Hello, tester!");
 }
 
-use tokio::main;            //load the package for bluetooth 
+#[tokio::main] 
+async fn main() {                                                                                                        // call the function to open tokio 
+    let manager = match Manager::new().await {                                                                   // the function with a check if it loads?
+        Ok(m) => {                                      // Message whether it loaded? 
+            println!("Manager loaded");                            
+            m
+        },
+        Err(e) => {
+            eprintln!("Failed loading manager: {:?}",  // Message whether it didn't load?
 
-async main() {              //call the function to open the 
-    println!("tokio loaded")
+            e);
+            return;
+
+        }
+    };
 }
 
-use btleplug::platform      //load bluetooth manager to connect with devices
-Manager::new() {            //call the function to open the 
-    println!("Manager loaded")
-}
+
+
 
