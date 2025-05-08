@@ -1,4 +1,4 @@
-use btleplug::platform::Manager;                        // for Bluetooth manager
+use btleplug::platform::{Adapter, Manager};                        // for Bluetooth manager
 use tokio::time::{sleep, Duration};                     // for pause/wait
 
 fn start() {
@@ -20,8 +20,27 @@ async fn main() {                                                               
 
         }
     };
-}
 
+    let adapters_result = manager.adapters().await;
 
+    let adapters = match adapters_result {
+    Ok(list) => {
+        // get first adapter
+        match list.intro_inter().nth(0) {
+            Some(adapter) => {
+                println!("Adapter found!");
+                adapter
+            },
+            None => {
+                eprintln!("No adapters found!");
+                return;
+            }            
+        }
+    },
+    Err(e) => {
+        eprintln!("Failed to get adapters: {:?}",
+            e);
+    }
+};
 
 
