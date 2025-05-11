@@ -5,4 +5,4 @@ edition = "2024"                # this defines the Rust edition. Rust is backwar
 
 [dependencies]
 btleplug = "0.11.8"             # The Bluetooth scanner and connector
-tokio = "1.44.2"                # The engine that makes async code run
+tokio = { version = "1.44.2", features = ["full"]}                # The engine that makes async code run
