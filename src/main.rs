@@ -1,13 +1,12 @@
 // 🔧 Import the Manager trait, which provides the `.adapters()` method.
-use btleplug::api::{Manager as ManagerTrait, ScanFilter};
+use btleplug::api::{Manager as ManagerTrait, Peripheral, ScanFilter};
 
 // 🔧 Import the platform-specific Manager struct and Adapter type.
 // These are used to create a Bluetooth manager instance and represent an adapter (like a USB dongle or built-in BT).
 use btleplug::platform::{Adapter, Manager as ManagerStruct};
 
-
-// 🔧 Import the ScanFilter function
-use btleplug::api:ScanFilter;
+// Central trait required to scan 
+use btleplug::api::Central;
 
 // ⏱ Import sleep and Duration to pause the program later (e.g., while scanning for devices).
 use tokio::time::{Duration, sleep};
@@ -33,14 +32,13 @@ async fn main() {
     let adapters_result = manager.adapters().await;
 
     // 🔁 Handle the result: either a list of adapters, or an error.
-    let adapters = match adapters_result {
+    let adapter = match adapters_result {
         Ok(list) => {
             // 📦 Get the first available adapter (most systems only have one).
             match list.into_iter().nth(0) {
                 Some(adapter) => {
                     println!("Adapter found!"); // ✅ We got an adapter to work with
-                    adapter, // 🎯 Store this adapter in the `adapters` variable
-                    adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
+                    adapter // 🎯 Store this adapter in the `adapters` variable
                 }
                 None => {
                     eprintln!("No adapters found!"); // ❌ No adapter was found (unexpected)
@@ -54,5 +52,21 @@ async fn main() {
             return;
         }
     };
+    // after getting the adapter this function scans for available devices
+    adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
+    println!("Scanning for 10 seconds");
+    sleep(Duration::from_secs(10)).await;
+
+    //Now print a list of devices
+    let peripherals = adapter.peripherals().await.unwrap();
+        for peripherals in peripherals {
+            let properties = peripherals.properties().await.unwrap();
+            let address    = peripherals.address();
+            let name       = properties
+                .as_ref()
+                .and_then(|p| p.local_name.clone())
+                .unwrap_or("(unknown)".to_string());
+            println!("Device: {}, Address: {}", name, address)
+        }
 }
 
