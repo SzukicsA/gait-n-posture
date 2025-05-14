@@ -8,6 +8,9 @@ use btleplug::platform::{Adapter, Manager as ManagerStruct};
 // Central trait required to scan 
 use btleplug::api::Central;
 
+// import plug to connect to devices
+// use btleplug::api::Peripheral;
+
 // ⏱ Import sleep and Duration to pause the program later (e.g., while scanning for devices).
 use tokio::time::{Duration, sleep};
 
@@ -66,7 +69,25 @@ async fn main() {
                 .as_ref()
                 .and_then(|p| p.local_name.clone())
                 .unwrap_or("(unknown)".to_string());
-            println!("Device: {}, Address: {}", name, address)
-        }
-}
+            println!("Device: {}, Address: {}", name, address);
+            
+            if name.contains("LE-WH-1000XM4") {
+                println!("Found target device: {}", name);
 
+                peripherals.connect().await.unwrap();
+                println!("Connected to {}", name);
+
+                // check if its connected to the device
+                let connected = peripherals.is_connected().await.unwrap();
+                println!("Is connected?, {}", connected);
+
+                break; // stop once connected to a device
+            };
+
+            if let Err(e) = peripherals.connect().await {
+                eprintln!("Failed to connect to {}: {:?}", name, e);
+
+                continue;
+            };
+        };
+}
