@@ -1,5 +1,5 @@
 // 🔧 Import the Manager trait, which provides the `.adapters()` method.
-use btleplug::api::{Manager as ManagerTrait, Peripheral, ScanFilter};
+use btleplug::api::{Characteristic, Manager as ManagerTrait, Peripheral, ScanFilter};
 
 // 🔧 Import the platform-specific Manager struct and Adapter type.
 // These are used to create a Bluetooth manager instance and represent an adapter (like a USB dongle or built-in BT).
@@ -89,6 +89,22 @@ async fn main() {
         println!("Connected!");
         
         let connected = peripheral.is_connected().await.unwrap();
-        println!("Connected? {}", connected);          
-}
+        println!("Connected? {}", connected);
 
+        // device information
+        use uuid::Uuid;
+
+        // collecting additional information on devices
+        peripheral.discover_services().await.unwrap();
+        let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
+
+        for service in peripheral.services() {
+            for characteristic in &service.characteristics {
+                if characteristic.uuid == name_char_uuid {
+                    let name_data = peripheral.read(characteristic).await.unwrap();
+                    let name_string = String::from_utf8_lossy(&name_data);
+                    println!("💡 Device name (via GATT): {}", name_string);
+                }
+            }
+        }
+}

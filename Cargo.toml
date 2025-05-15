@@ -1,8 +1,9 @@
 [package]
-name = "bluetooth_scanner_test" # name of my project
-version = "0.1.0"               # version of my package (0.1.0 mean unstable and first attempt
-edition = "2024"                # this defines the Rust edition. Rust is backwards-compatible but errors can occure. in that case I should use an older edition
+name = "bluetooth_scanner_test"                         # name of my project
+version = "0.1.0"                                       # version of my package (0.1.0 mean unstable and first attempt
+edition = "2024"                                        # this defines the Rust edition. Rust is backwards-compatible but errors can occure. in that case I should use an older edition
 
 [dependencies]
-btleplug = "0.11.8"             # The Bluetooth scanner and connector
-tokio = { version = "1.44.2", features = ["full"]}                # The engine that makes async code run
+btleplug = "0.11.8"                                     # The Bluetooth scanner and connector
+tokio = { version = "1.44.2", features = ["full"]}      # The engine that makes async code run
+uuid  = "1.16.0"
