@@ -66,15 +66,57 @@ async fn main() {
     sleep(Duration::from_secs(10)).await;
 
     //Now print a list of devices
-    let peripherals = adapter.peripherals().await.unwrap();
+        // device information
+        use uuid::Uuid;
+        let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
+    
+        let peripherals = adapter.peripherals().await.unwrap();
+        let mut valid_devices = vec![];
+
         for (i, peripheral) in peripherals.iter().enumerate() {
             let properties = peripheral.properties().await.unwrap();
+
+            // only try connectable devices
+            let is_not_connectable = properties
+                .as_ref()
+                .map(|p| !p.connectable.unwrap_or(false))
+                .unwrap_or(true);
+
+            if is_not_connectable {
+                continue;
+            }
+            
+
+            // collects information on devices
             let address    = peripheral.address();
-            let name       = properties
+
+            // get advertised name
+            let mut name       = properties
                 .as_ref()
                 .and_then(|p| p.local_name.clone())
                 .unwrap_or("(unknown)".to_string());
-            println!("[{}] Device: {}, Address: {}", i, name, address);
+
+            // now try to get full name via GATT by connecting
+            if name == "(unknown)" {
+                if let Ok(_) = peripheral.connect().await {
+                    if let Ok(_) = peripheral.discover_services().await {
+                        for service in peripheral.services() {
+                            for characteristic in &service.characteristics {
+                                if characteristic.uuid == name_char_uuid {
+                                    if let Ok(name_data) = peripheral.read(characteristic).await {
+                                        name = String::from_utf8_lossy(&name_data).to_string();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // disconnect after reading
+                    let _ = peripheral.disconnect().await;
+                }                
+            }
+
+            println!("[{}] Device: {}, Address: {}", valid_devices_len(), name, address);
+            valid_devices.push(peripheral.clone());
         };
         // 
         print!("Enter choose device to connect to (number):");
@@ -84,27 +126,11 @@ async fn main() {
         let selected: usize = input.trim().parse().unwrap();
 
         // Connect to selected device
-        let peripheral = &peripherals[selected];
+        let peripheral = &valid_devices[selected];
         peripheral.connect().await.unwrap();
         println!("Connected!");
         
         let connected = peripheral.is_connected().await.unwrap();
         println!("Connected? {}", connected);
-
-        // device information
-        use uuid::Uuid;
-
-        // collecting additional information on devices
-        peripheral.discover_services().await.unwrap();
-        let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
-
-        for service in peripheral.services() {
-            for characteristic in &service.characteristics {
-                if characteristic.uuid == name_char_uuid {
-                    let name_data = peripheral.read(characteristic).await.unwrap();
-                    let name_string = String::from_utf8_lossy(&name_data);
-                    println!("💡 Device name (via GATT): {}", name_string);
-                }
-            }
-        }
 }
+
