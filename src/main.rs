@@ -76,54 +76,73 @@ async fn main() {
         for (i, peripheral) in peripherals.iter().enumerate() {
             let properties = peripheral.properties().await.unwrap();
 
-            // only try connectable devices
-            let is_not_connectable = properties
-                .as_ref()
-                .map(|p| !p.connectable.unwrap_or(false))
-                .unwrap_or(true);
-
-            if is_not_connectable {
-                continue;
-            }
-            
-
             // collects information on devices
-            let address    = peripheral.address();
+            let address = peripheral.address();
 
             // get advertised name
-            let mut name       = properties
+            let adv_name = properties
                 .as_ref()
                 .and_then(|p| p.local_name.clone())
-                .unwrap_or("(unknown)".to_string());
+                .unwrap_or("(none)".to_string());
 
-            // now try to get full name via GATT by connecting
-            if name == "(unknown)" {
-                if let Ok(_) = peripheral.connect().await {
-                    if let Ok(_) = peripheral.discover_services().await {
-                        for service in peripheral.services() {
-                            for characteristic in &service.characteristics {
-                                if characteristic.uuid == name_char_uuid {
-                                    if let Ok(name_data) = peripheral.read(characteristic).await {
-                                        name = String::from_utf8_lossy(&name_data).to_string();
-                                    }
+            let mut gatt_name = "(unavailable)".to_string();
+
+            if let Ok(_) = peripheral.connect().await {
+                if let Ok(_) = peripheral.discover_services().await {
+                    for service in peripheral.services() {
+                        for characteristic in &service.characteristics {
+                            if characteristic.uuid == name_char_uuid {
+                                if let Ok(name_data) = peripheral.read(characteristic).await {
+                                    gatt_name = String::from_utf8_lossy(&name_data).to_string();
                                 }
                             }
                         }
                     }
-                    // disconnect after reading
-                    let _ = peripheral.disconnect().await;
-                }                
+                }
+                // disconnect after reading
+                let _ = peripheral.disconnect().await;
             }
 
-            println!("[{}] Device: {}, Address: {}", valid_devices_len(), name, address);
+            println!(
+                "[{}] Adv Name: {} GATT Name: {} Address: {}",
+                valid_devices.len(),
+                adv_name,
+                gatt_name,
+                address
+                );
+
+            // save for selection
             valid_devices.push(peripheral.clone());
         };
         // 
-        print!("Enter choose device to connect to (number):");
+        print!("Enter a number to connect with a device or 'q' to quit:");
         io::stdout().flush().unwrap();
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        let selected: usize = input.trim().parse().unwrap();
+        if io::stdin().read_line(&mut input).is_err() {
+            eprintln!("Failed to read input.");
+            return;
+        }
+
+        let trimmed = input.trim();
+        if trimmed == "q" {
+            println!("Existing");
+            return;
+        }
+
+        let selected: usize = match trimmed.parse() {
+            Ok(n) => n,
+            Err(_) => {
+                eprintln!("Invalid input");
+                return;
+            }
+
+        };
+
+        // Error message is selection is invalid
+        if selected >= valid_devices.len() {
+            eprintln!("Invalid selection.");
+            return;
+        }
 
         // Connect to selected device
         let peripheral = &valid_devices[selected];
