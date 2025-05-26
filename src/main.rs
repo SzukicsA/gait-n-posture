@@ -10,7 +10,7 @@ use btleplug::api::Central;
 use tokio::select;
 
 // import to allow interactive input
-use std::io::{self, Write};
+use std::io::{self, stdin, Write};
 use std::string;
 
 // import plug to connect to devices
@@ -73,9 +73,19 @@ async fn main() {
         let peripherals = adapter.peripherals().await.unwrap();
         let mut valid_devices = vec![];
 
-        for (i, peripheral) in peripherals.iter().enumerate() {
+        for peripheral in peripherals.iter() {
             let properties = peripheral.properties().await.unwrap();
 
+            // skip devices that cant be connected to
+            let is_not_connectable = properties
+                .as_ref()
+                .map(|p| !p.connectable.unwrap_or(false))
+                .unwrap_or(true);
+            if is_not_connected {
+                continue;
+            }
+
+            
             // collects information on devices
             let address = peripheral.address();
 
@@ -83,37 +93,54 @@ async fn main() {
             let adv_name = properties
                 .as_ref()
                 .and_then(|p| p.local_name.clone())
-                .unwrap_or("(none)".to_string());
 
-            let mut gatt_name = "(unavailable)".to_string();
+            let mut gatt_name = None;
 
-            if let Ok(_) = peripheral.connect().await {
-                if let Ok(_) = peripheral.discover_services().await {
-                    for service in peripheral.services() {
-                        for characteristic in &service.characteristics {
-                            if characteristic.uuid == name_char_uuid {
-                                if let Ok(name_data) = peripheral.read(characteristic).await {
-                                    gatt_name = String::from_utf8_lossy(&name_data).to_string();
+            if adv_name.is_gone() {
+                if let Ok(_) = peripheral.connect().await {
+                    if let Ok(_) = peripheral.discover_services().await {
+                        for service in peripheral.services() {
+                            for characteristic in &service.characteristics {
+                                if characteristic.uuid.to_string() == "00002a00-0000-1000-8000-00805f9b34fb" {
+                                    if let Ok(name_data) = peripheral.read(characteristic).await {
+                                        gatt_name = Some(String::from_utf8_lossy(&data).to_string());
+                                    }
                                 }
                             }
                         }
                     }
+                    // Keep connection until deliberately broken
+                    loop{
+                        print!("Type 'd' to disconnect, 'q' to quit: ");
+                        io::stdout().flush().unwrap();
+                        let mut cmd = String::new();
+                        io:stdin().read_line(&mut cmd).unwrap();
+                        match cmd.trim() {
+                            "d" => {
+                                peripheral.disconnect().await.unwrap();
+                                println!("Disconnected"):
+                                break;
+                            }
+                            "q" => break,
+                            _ => println!("Unknown command"),
+                        }
+                    }
                 }
-                // disconnect after reading
-                let _ = peripheral.disconnect().await;
             }
 
-            println!(
-                "[{}] Adv Name: {} GATT Name: {} Address: {}",
-                valid_devices.len(),
-                adv_name,
-                gatt_name,
-                address
-                );
+            let final_name = adv_name
+                .map(|n| format!("ADV: {}", n))
+                .or_else(|| gatt_name.map(|n| format!("GATT: {}", n)))
+                .unwrap_or("(unknown)".to_string());
 
-            // save for selection
+            println!(
+                "[{}] Name: {}, Address: {}",
+                valid_devices.len(),
+                final_name,
+                address);
             valid_devices.push(peripheral.clone());
         };
+
         // 
         print!("Enter a number to connect with a device or 'q' to quit:");
         io::stdout().flush().unwrap();
