@@ -1,17 +1,20 @@
 // 🔧 Import the Manager trait, which provides the `.adapters()` method.
-use btleplug::api::{Characteristic, Manager as ManagerTrait, Peripheral, ScanFilter};
+use btleplug::api::{Manager as ManagerTrait, Peripheral, ScanFilter};
+//use btleplug::api::Characteristic;
 
 // 🔧 Import the platform-specific Manager struct and Adapter type.
 // These are used to create a Bluetooth manager instance and represent an adapter (like a USB dongle or built-in BT).
-use btleplug::platform::{Adapter, Manager as ManagerStruct};
+use btleplug::platform::{Manager as ManagerStruct};
+//use btleplug::Adapter;
 
 // Central trait required to scan 
 use btleplug::api::Central;
-use tokio::select;
+//use tokio::select;
 
 // import to allow interactive input
-use std::io::{self, stdin, Write};
-use std::string;
+use std::io::{self, Write};
+//use std::string;
+//use std::stdin;
 
 // import plug to connect to devices
 // use btleplug::api::Peripheral;
@@ -71,20 +74,17 @@ async fn main() {
         let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
     
         let peripherals = adapter.peripherals().await.unwrap();
+
         let mut valid_devices = vec![];
 
         for peripheral in peripherals.iter() {
             let properties = peripheral.properties().await.unwrap();
 
             // skip devices that cant be connected to
-            let is_not_connectable = properties
-                .as_ref()
-                .map(|p| !p.connectable.unwrap_or(false))
-                .unwrap_or(true);
-            if is_not_connected {
+            let is_valid = properties.is_none();
                 continue;
             }
-
+        
             
             // collects information on devices
             let address = peripheral.address();
@@ -92,18 +92,29 @@ async fn main() {
             // get advertised name
             let adv_name = properties
                 .as_ref()
-                .and_then(|p| p.local_name.clone())
+                .and_then(|p| p.local_name.clone());
+
+            let name_display = adv_name.clone().unwrap_or("(no advertised name)").to_string();
+
+            println!(
+                "[{}] Name: {}, Address: {}",
+                valid_devices.len(),
+                name_display,
+                address
+                );
+
+            valid_devices.push(peripheral.clone());
 
             let mut gatt_name = None;
 
-            if adv_name.is_gone() {
+            if adv_name.is_none() {
                 if let Ok(_) = peripheral.connect().await {
                     if let Ok(_) = peripheral.discover_services().await {
                         for service in peripheral.services() {
                             for characteristic in &service.characteristics {
                                 if characteristic.uuid.to_string() == "00002a00-0000-1000-8000-00805f9b34fb" {
                                     if let Ok(name_data) = peripheral.read(characteristic).await {
-                                        gatt_name = Some(String::from_utf8_lossy(&data).to_string());
+                                        gatt_name = Some(String::from_utf8_lossy(&name_data).to_string());
                                     }
                                 }
                             }
@@ -114,11 +125,11 @@ async fn main() {
                         print!("Type 'd' to disconnect, 'q' to quit: ");
                         io::stdout().flush().unwrap();
                         let mut cmd = String::new();
-                        io:stdin().read_line(&mut cmd).unwrap();
+                        io::stdin().read_line(&mut cmd).unwrap();
                         match cmd.trim() {
                             "d" => {
                                 peripheral.disconnect().await.unwrap();
-                                println!("Disconnected"):
+                                println!("Disconnected");
                                 break;
                             }
                             "q" => break,
