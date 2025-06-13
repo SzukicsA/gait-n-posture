@@ -1,4 +1,4 @@
-// 🔧 Import the Manager trait, which provides the `.adapters()` method.
+// 🔧 Import the Manager trait, which provides the .adapters() method.
 use btleplug::api::{Manager as ManagerTrait, Peripheral, ScanFilter};
 //use btleplug::api::Characteristic;
 
@@ -49,7 +49,7 @@ async fn main() {
             match list.into_iter().nth(0) {
                 Some(adapter) => {
                     println!("Adapter found!"); // ✅ We got an adapter to work with
-                    adapter // 🎯 Store this adapter in the `adapters` variable
+                    adapter // 🎯 Store this adapter in the adapters variable
                 }
                 None => {
                     eprintln!("No adapters found!"); // ❌ No adapter was found (unexpected)
@@ -81,7 +81,7 @@ async fn main() {
             let properties = peripheral.properties().await.unwrap();
 
             // skip devices that cant be connected to
-            let is_valid = properties.is_none();
+            if properties.is_none(){
                 continue;
             }
         
@@ -94,7 +94,7 @@ async fn main() {
                 .as_ref()
                 .and_then(|p| p.local_name.clone());
 
-            let name_display = adv_name.clone().unwrap_or("(no advertised name)").to_string();
+            let name_display = adv_name.clone().unwrap_or_else(|| "(no advertised name)".to_string());
 
             println!(
                 "[{}] Name: {}, Address: {}",
@@ -102,8 +102,6 @@ async fn main() {
                 name_display,
                 address
                 );
-
-            valid_devices.push(peripheral.clone());
 
             let mut gatt_name = None;
 
@@ -190,4 +188,3 @@ async fn main() {
         let connected = peripheral.is_connected().await.unwrap();
         println!("Connected? {}", connected);
 }
-
