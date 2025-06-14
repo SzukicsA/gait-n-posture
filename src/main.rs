@@ -66,7 +66,7 @@ async fn main() {
     // after getting the adapter this function scans for available devices
     adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
     println!("Scanning for 10 seconds");
-    sleep(Duration::from_secs(10)).await;
+    sleep(Duration::from_secs(30)).await;
 
     //Now print a list of devices
         // device information
@@ -90,11 +90,10 @@ async fn main() {
             let address = peripheral.address();
 
             // get advertised name
-            let adv_name = properties
-                .as_ref()
-                .and_then(|p| p.local_name.clone());
+            let mut name_display = "(no advertised name)".to_string();
 
-            let name_display = adv_name.clone().unwrap_or_else(|| "(no advertised name)".to_string());
+            // skip devices that can't be connected to
+            if 
 
             println!(
                 "[{}] Name: {}, Address: {}",
