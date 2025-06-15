@@ -1,28 +1,10 @@
 // 🔧 Import the Manager trait, which provides the .adapters() method.
-use btleplug::api::{Manager as ManagerTrait, Peripheral, ScanFilter};
-//use btleplug::api::Characteristic;
-
-// 🔧 Import the platform-specific Manager struct and Adapter type.
-// These are used to create a Bluetooth manager instance and represent an adapter (like a USB dongle or built-in BT).
-use btleplug::platform::{Manager as ManagerStruct};
-//use btleplug::Adapter;
-
-// Central trait required to scan 
-use btleplug::api::Central;
-//use tokio::select;
-
-// import to allow interactive input
+use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
+use btleplug::platform::Manager as ManagerStruct;
+use tokio::time::{sleep, Duration};
 use std::io::{self, Write};
-//use std::string;
-//use std::stdin;
+use uuid::Uuid;
 
-// import plug to connect to devices
-// use btleplug::api::Peripheral;
-
-// ⏱ Import sleep and Duration to pause the program later (e.g., while scanning for devices).
-use tokio::time::{Duration, sleep};
-
-// 🚀 This marks the asynchronous main function, run inside the Tokio async runtime.
 #[tokio::main]
 async fn main() {
     // 📦 Create a new instance of the Bluetooth manager (platform-specific).
@@ -65,12 +47,13 @@ async fn main() {
     };
     // after getting the adapter this function scans for available devices
     adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
-    println!("Scanning for 10 seconds");
-    sleep(Duration::from_secs(30)).await;
+    for i in (1..=30).rev() {
+        println!("...{}s", i);
+        sleep(Duration::from_secs(1)).await;
+    }
 
     //Now print a list of devices
         // device information
-        use uuid::Uuid;
         let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
     
         let peripherals = adapter.peripherals().await.unwrap();
@@ -78,13 +61,10 @@ async fn main() {
         let mut valid_devices = vec![];
 
         for peripheral in peripherals.iter() {
-            let properties = peripheral.properties().await.unwrap();
-
-            // skip devices that cant be connected to
-            if properties.is_none(){
+            let Some(props) = peripheral.properties().await.unwrap() else{
                 continue;
-            }
-        
+            };
+        }
             
             // collects information on devices
             let address = peripheral.address();
@@ -113,7 +93,7 @@ async fn main() {
                     if let Ok(_) = peripheral.discover_services().await {
                         for service in peripheral.services() {
                             for characteristic in &service.characteristics {
-                                if characteristic.uuid.to_string() == "00002a00-0000-1000-8000-00805f9b34fb" {
+                                if characteristic.uuid == name_char_uuid {
                                     if let Ok(name_data) = peripheral.read(characteristic).await {
                                         gatt_name = Some(String::from_utf8_lossy(&name_data).to_string());
                                     }
@@ -154,7 +134,6 @@ async fn main() {
                 final_name,
                 address);
             valid_devices.push(peripheral.clone());
-        };
 
         // 
         print!("Enter a number to connect with a device or 'q' to quit:");
@@ -194,3 +173,4 @@ async fn main() {
         let connected = peripheral.is_connected().await.unwrap();
         println!("Connected? {}", connected);
 }
+
