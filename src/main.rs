@@ -93,7 +93,11 @@ async fn main() {
             let mut name_display = "(no advertised name)".to_string();
 
             // skip devices that can't be connected to
-            if 
+            if let Some(props) = &properties {
+                if let Some(name) = &props.local_name {
+                    name_display = name.clone();
+                }
+            }
 
             println!(
                 "[{}] Name: {}, Address: {}",
@@ -104,7 +108,7 @@ async fn main() {
 
             let mut gatt_name = None;
 
-            if adv_name.is_none() {
+            if name_display == "(no advertised name)" {
                 if let Ok(_) = peripheral.connect().await {
                     if let Ok(_) = peripheral.discover_services().await {
                         for service in peripheral.services() {
@@ -136,10 +140,13 @@ async fn main() {
                 }
             }
 
-            let final_name = adv_name
-                .map(|n| format!("ADV: {}", n))
-                .or_else(|| gatt_name.map(|n| format!("GATT: {}", n)))
-                .unwrap_or("(unknown)".to_string());
+            let final_name = if name_display == "(no adcertised name)" {
+                gatt_name
+                    .map(|n| format!("GATT: {}", n))
+                    .unwrap_or_else(|| "(unknown)".to_string())
+            } else {
+                format!("ADV: {}", name_display)
+            };
 
             println!(
                 "[{}] Name: {}, Address: {}",
