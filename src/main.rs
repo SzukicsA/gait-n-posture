@@ -61,10 +61,9 @@ async fn main() {
         let mut valid_devices = vec![];
 
         for peripheral in peripherals.iter() {
-            let Some(props) = peripheral.properties().await.unwrap() else{
+            let Some(properties) = peripheral.properties().await.unwrap() else{
                 continue;
             };
-        }
             
             // collects information on devices
             let address = peripheral.address();
@@ -72,19 +71,17 @@ async fn main() {
             // get advertised name
             let mut name_display = "(no advertised name)".to_string();
 
-            // skip devices that can't be connected to
-            if let Some(props) = &properties {
-                if let Some(name) = &props.local_name {
+            // skip devices that can't be connected to_string
+            if let Some(name) = &properties.local_name {
                     name_display = name.clone();
                 }
-            }
 
             println!(
-                "[{}] Name: {}, Address: {}",
-                valid_devices.len(),
+                "Found device: {} [{}]",
                 name_display,
                 address
                 );
+        }
 
             let mut gatt_name = None;
 
