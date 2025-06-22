@@ -2,8 +2,8 @@
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 use btleplug::platform::Manager as ManagerStruct;
 use tokio::time::{sleep, Duration};
-use std::io::{self, Write};
-use uuid::Uuid;
+// use std::io::{self, Write};
+// use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
@@ -54,7 +54,7 @@ async fn main() {
 
     //Now print a list of devices
         // device information
-        let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
+    // let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
     
         let peripherals = adapter.peripherals().await.unwrap();
 
