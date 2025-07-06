@@ -45,12 +45,13 @@ async fn main() {
             return;
         }
     };
+
     // after getting the adapter this function scans for available devices
     adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
-   // for i in (1..=30).rev() {
-   //     println!("...{}s", i);
+    // for i in (1..=30).rev() {
+    //     println!("...{}s", i);
         sleep(Duration::from_secs(30)).await;
-   // }
+    // }
 
     //Now print a list of devices
         // device information
@@ -63,9 +64,8 @@ async fn main() {
         // collects information on devices
         let address = peripheral.address();
 
-
             if let Err(e) = peripheral.connect().await {
-                eprint!("Could not connect to device {}: {:?}", address, e);
+                eprintln!("Could not connect to device {}: {:?}", address, e);
                 continue;
             }
 
@@ -88,20 +88,29 @@ async fn main() {
                 continue;
             };
             
-           
             // get advertised name
-            //let mut name_display = "(no advertised name)".to_string();
+            let name_display = match &properties.local_name{
+                Some(name) => name.clone(),
+                None => "(no name in advertisement)".to_string(),
+            };
 
+            println!("Found devices: {} [{}]", name_display, address);
+            
             // skip devices that can't be connected to_string
             //if let Some(name) = &properties.local_name {
             //        name_display = name.clone();
             //    }
 
-           // println!(
-           //     "Found device: {} [{}]",
-           //     name_display,
-           //     address
-           //     );
-        }
+            // println!(
+            //          "Found device: {} [{}]",
+            //          name_display,
+            //          address
+            //          );
+
+       }
 }
 
+
+
+
+ 
