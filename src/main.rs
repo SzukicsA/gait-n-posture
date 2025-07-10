@@ -1,9 +1,9 @@
 // 🔧 Import packages. first comes module and then 
-use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
+use btleplug::api::{Central, Characteristic, Manager as _, Peripheral as _, ScanFilter, CharPropFlags};
 use btleplug::platform::Manager as ManagerStruct;
 use tokio::time::{sleep, Duration};
 // use std::io::{self, Write};
-// use uuid::Uuid;
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
@@ -77,6 +77,9 @@ async fn main() {
             let services = peripheral.services();
 
             for services in services {
+                if Characteristic.properties.contains(CharPropFlags::READ) {
+                    String::from_utf8(...)
+                }
                 println!("  services; {}", services.uuid);
             }
 
