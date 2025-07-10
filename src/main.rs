@@ -55,50 +55,53 @@ async fn main() {
 
     //Now print a list of devices
         // device information
-        // let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
+        //let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
     
         // look and list devices to a list that have been scanned beforehand
         let peripherals = adapter.peripherals().await.unwrap(); // await mean wait until done with the operation and unwrap mean extract results
 
         for peripheral in peripherals.iter() {
-        // collects information on devices
-        let address = peripheral.address();
-
-            if let Err(e) = peripheral.connect().await {
-                eprintln!("Could not connect to device {}: {:?}", address, e);
+            // collects information on devices    
+            let address = peripheral.address();
+            let Some(properties) = peripheral.properties().await.unwrap() else {
                 continue;
-            }
-
-            if let Err(e) = peripheral.discover_services().await {
-                eprintln!("Could not discover services: {:?}", e);
-                continue;
-            }
-
-            let services = peripheral.services();
-
-            for services in services {
-                if Characteristic.properties.contains(CharPropFlags::READ) {
-                    String::from_utf8(...)
-                }
-                println!("  services; {}", services.uuid);
-            }
-
-            if let Err(e) = peripheral.disconnect().await {
-                eprintln!("could not disconnect: {:?}", e);
-            }
-
-            let Some(properties) = peripheral.properties().await.unwrap() else{
-                continue;
-            };
-            
-            // get advertised name
+            }; 
+            // get advertised name   
             let name_display = match &properties.local_name{
                 Some(name) => name.clone(),
                 None => "(no name in advertisement)".to_string(),
             };
 
             println!("Found devices: {} [{}]", name_display, address);
-            
+        }
+}
+
+            //if let Err(e) = peripheral.discover_services().await {
+            //    eprintln!("Could not discover services: {:?}", e);
+            //    continue;
+            //}
+
+            //let services = peripheral.services();
+
+            //for services in services {
+            //    println!("  services; {}", services.uuid);
+            //}
+
+            //if let Err(e) = peripheral.disconnect().await {
+            //    eprintln!("could not disconnect: {:?}", e);
+            //}
+
+            //if let Err(e) = peripheral.connect().await {
+            //    eprintln!("Could not connect to device {}: {:?}", address, e);
+            //    continue;
+            //}
+
+            //if Characteristic.properties.contains(CharPropFlags::READ) {
+            //    String::from_utf8(0x2A00);
+            //}
+            //else {
+            //}
+
             // skip devices that can't be connected to_string
             //if let Some(name) = &properties.local_name {
             //        name_display = name.clone();
@@ -109,11 +112,4 @@ async fn main() {
             //          name_display,
             //          address
             //          );
-
-       }
-}
-
-
-
-
  
