@@ -47,11 +47,8 @@ async fn main() {
     };
 
     // after getting the adapter this function scans for available devices
-    adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth devices
-    // for i in (1..=30).rev() {
-    //     println!("...{}s", i);
-        sleep(Duration::from_secs(30)).await;
-    // }
+    adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth discover_services
+    sleep(Duration::from_secs(30)).await;
 
     //Now print a list of devices
         // device information
@@ -60,18 +57,48 @@ async fn main() {
         // look and list devices to a list that have been scanned beforehand
         let peripherals = adapter.peripherals().await.unwrap(); // await mean wait until done with the operation and unwrap mean extract results
 
-        for peripheral in peripherals.iter() {
-            // collects information on devices    
+        for peripheral in peripherals.iter() {            
+            // collects information on devices   
             let address = peripheral.address();
-            let Some(properties) = peripheral.properties().await.unwrap() else {
-                continue;
-            }; 
+            //let Some(properties) = peripheral.properties().await.unwrap() else {
+            //    continue;
+            //}; 
+
+            if let Err(e) = peripheral.connect().await {
+               // eprintln!("Could not connect: {:?}", e);
+               CharPropFlags::READ;    //log error and continue;
+            }
+
+            if let Err(e) = peripheral.discover_services().await {
+                //eprintln!("Could not discover services: {:?}", e);
+               CharPropFlags::READ;    //log error and continue;
+            }
+
+            for service in peripheral.services() {
+                for characteristic in service.characteristics {
+                    if characteristic.properties.contains(CharPropFlags::READ) {
+                        match peripheral.read(&characteristic).await {
+                            Ok(data) => {
+                                // log or interpret data
+                            }
+                            Err(e) => {
+                                // likely a permission error -> skip
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            let _ = peripheral.disconnect().await;
+
+
+
             // get advertised name   
-            let name_display = match &properties.local_name{
+            let name_display = match &properties.local_name{ 
                 Some(name) => name.clone(),
                 None => "(no name in advertisement)".to_string(),
             };
-
             println!("Found devices: {} [{}]", name_display, address);
         }
 }
