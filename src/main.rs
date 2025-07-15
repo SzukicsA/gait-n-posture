@@ -65,13 +65,14 @@ async fn main() {
             //}; 
 
             if let Err(e) = peripheral.connect().await {
-               // eprintln!("Could not connect: {:?}", e);
-               CharPropFlags::READ;    //log error and continue;
+                // eprintln!("Could not connect: {:?}", e);
+                println!("connecting to: {}, [{}]", peripheral, e);
             }
 
             if let Err(e) = peripheral.discover_services().await {
                 //eprintln!("Could not discover services: {:?}", e);
-               CharPropFlags::READ;    //log error and continue;
+                println!("found services: {}, [{}]", peripheral, e);
+             
             }
 
             for service in peripheral.services() {
@@ -93,13 +94,6 @@ async fn main() {
             let _ = peripheral.disconnect().await;
 
 
-
-            // get advertised name   
-            let name_display = match &properties.local_name{ 
-                Some(name) => name.clone(),
-                None => "(no name in advertisement)".to_string(),
-            };
-            println!("Found devices: {} [{}]", name_display, address);
         }
 }
 
@@ -139,4 +133,10 @@ async fn main() {
             //          name_display,
             //          address
             //          );
- 
+
+            // get advertised name   
+            //let name_display = match &properties.local_name{ 
+            //    Some(name) => name.clone(),
+            //    None => "(no name in advertisement)".to_string(),
+            //};
+            //println!("Found devices: {} [{}]", name_display, address);
