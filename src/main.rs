@@ -60,9 +60,13 @@ async fn main() {
         for peripheral in peripherals.iter() {            
             // collects information on devices   
             let address = peripheral.address();
-            //let Some(properties) = peripheral.properties().await.unwrap() else {
-            //    continue;
-            //}; 
+            if let Some(properties) = peripheral.properties().await.unwrap() {
+                if let Some(name) = properties.local_name {
+                    println!("Found peripheral with name {}", name);
+                } else {
+                    println!("Found peripheral with properties but no name");
+                }
+            }; 
 
             if let Err(e) = peripheral.connect().await {
                 // eprintln!("Could not connect: {:?}", e);
