@@ -1,8 +1,7 @@
 // 🔧 Import packages. first comes module and then 
-use btleplug::api::{Central, CharPropFlags, Characteristic, Manager as _, Peripheral, ScanFilter, CentralEvent};
+use btleplug::api::{Central, CharPropFlags, Characteristic, Manager as _, Peripheral, ScanFilter};
 use btleplug::platform::Manager as ManagerStruct;
 use tokio::time::{sleep, Duration};
-use futures::stream::StreamExt;
 // use std::io::{self, Write};
 use uuid::Uuid;
 
@@ -47,7 +46,6 @@ async fn main() {
         }
     };
 
-let mut events = adapter.events().await.unwrap();  
     // after getting the adapter this function scans for available devices
     adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth discover_services
     sleep(Duration::from_secs(30)).await;
@@ -59,51 +57,27 @@ let mut events = adapter.events().await.unwrap();
         // look and list devices to a list that have been scanned beforehand
         let peripherals = adapter.peripherals().await.unwrap(); // await mean wait until done with the operation and unwrap mean extract results
 
-tokio::spawn(async move {  
-    while let Some(event) = events.next().await {  
-        match event {  
-            CentralEvent::DeviceDiscovered(id) => {  
-                if let Ok(peripheral) = adapter.peripheral(&id).await {  
-                    if let Ok(Some(properties)) = peripheral.properties().await {  
-                        let name = properties.local_name.unwrap_or("Unknown".to_string());  
-                        println!("Discovered: {} ({})", name, properties.address);  
-                    }  
-                }  
-            }  
-            CentralEvent::DeviceUpdated(id) => {  
-                // Device properties updated - might now have a name  
-                if let Ok(peripheral) = adapter.peripheral(&id).await {  
-                    if let Ok(Some(properties)) = peripheral.properties().await {  
-                        if let Some(name) = properties.local_name {  
-                            println!("Updated: {} ({})", name, properties.address);  
-                        }  
-                    }  
-                }  
-            }  
-            _ => {}  
-        }  
-    }  
-});
-
-
+        for peripheral in peripherals.iter() {
+            match peripheral.properties().await {
+                Ok(properties) => {
+                    let name = properties
+                        .and_then(|p| p.local_name)
+                        .unwrap_or("Unknown".to_string());
+                    println!("Found devices: {}", name)
+                    }
+                Err(e) => {
+                    eprintln!("Error getting properties: {:?}", e);
+                    continue;
+                }
+            }
+        }
 }
 
             // collects information on devices   
-<<<<<<< HEAD
 //            let address = peripheral.address();
             //let Some(properties) = peripheral.properties().await.unwrap() else {
             //    continue;
             //}; 
-=======
-            let address = peripheral.address();
-            if let Some(properties) = peripheral.properties().await.unwrap() {
-                if let Some(name) = properties.local_name {
-                    println!("Found peripheral with name {}", name);
-                } else {
-                    println!("Found peripheral with properties but no name");
-                }
-            }; 
->>>>>>> 7d14f273ac4cce188f7a7fc7733f0c2dc615cc33
 
 //            if let Err(e) = peripheral.connect().await {
 //                // eprintln!("Could not connect: {:?}", e);
