@@ -47,44 +47,29 @@ async fn main() {
         }
     };
 
-let mut events = adapter.events().await.unwrap();  
+    let mut events = adapter.events().await.unwrap();  
     // after getting the adapter this function scans for available devices
-    adapter.start_scan(ScanFilter::default()).await.unwrap(); // Scan for bluetooth discover_services
-    sleep(Duration::from_secs(30)).await;
+        adapter.start_scan(ScanFilter::default()).await?; // Scan for bluetooth discover_services
+        //sleep(Duration::from_secs(30)).await;
 
-    //Now print a list of devices
-        // device information
-        //let name_char_uuid = Uuid::parse_str("00002a00-0000-1000-8000-00805f9b34fb").unwrap();
     
         // look and list devices to a list that have been scanned beforehand
-        let peripherals = adapter.peripherals().await.unwrap(); // await mean wait until done with the operation and unwrap mean extract results
-
-tokio::spawn(async move {  
-    while let Some(event) = events.next().await {  
-        match event {  
-            CentralEvent::DeviceDiscovered(id) => {  
-                if let Ok(peripheral) = adapter.peripheral(&id).await {  
-                    if let Ok(Some(properties)) = peripheral.properties().await {  
-                        let name = properties.local_name.unwrap_or("Unknown".to_string());  
-                        println!("Discovered: {} ({})", name, properties.address);  
+        let a = adapter.clone();
+        let handle = tokio::spawn(async move{
+            while let Some(event) = events.await {
+                // match event { 
+                    CentralEvent::DeviceDiscovered(id) => {  
+                        if let Ok(peripheral) = adapter.peripheral(&id).await {  
+                            if let Ok(Some(properties)) = peripheral.properties().await {  
+                                let name = properties.local_name.unwrap_or("Unknown".to_string());
+                                println!("Discovered: {} ({})", name, properties.address);  
+                            }  
+                        }
                     }  
-                }  
-            }  
-            CentralEvent::DeviceUpdated(id) => {  
-                // Device properties updated - might now have a name  
-                if let Ok(peripheral) = adapter.peripheral(&id).await {  
-                    if let Ok(Some(properties)) = peripheral.properties().await {  
-                        if let Some(name) = properties.local_name {  
-                            println!("Updated: {} ({})", name, properties.address);  
-                        }  
-                    }  
-                }  
-            }  
-            _ => {}  
-        }  
-    }  
-});
-
-
-}
+                }
+            });
+        // scanning will continue until manually stopped
+        tokio::signal::ctrl_c().await.unwrap();
+        handle.abort();
+        }
 
