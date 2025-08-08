@@ -7,5 +7,6 @@ edition  = "2024"                                       # Specifies the Rust edi
 [dependencies]
 btleplug = "0.11.8"                                     # Cross-platform Bluetooth scanner and connector; ideal for my purposes
 tokio    = { version  = "1.44.2", features = ["full"]}  # Crate that allows me to use asynchronous code. This means I can scan for multiple devices while connecting to already-found ones and collecting data
+futures  = "0.3.31"
 
 uuid     = "1.16.0"                                     # Crate used to work with UUIDs. It helps identify Bluetooth services/devices automatically by parsing and comparing UUIDs
