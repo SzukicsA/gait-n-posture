@@ -1,0 +1,12 @@
+# This is the manifest with the metadata needed to compile the package(s) used
+[package]
+name     = "bluetooth_scanner_test"                     # Name of my project
+version  = "0.1.0"                                      # Version of my package (0.1.0 means it's unstable and the first version)
+edition  = "2024"                                       # Specifies the Rust edition. Rust is backwards-compatible, but if errors occur, I should switch to an older edition
+
+[dependencies]
+btleplug = "0.11.8"                                     # Cross-platform Bluetooth scanner and connector; ideal for my purposes
+tokio    = { version  = "1.44.2", features = ["full"]}  # Crate that allows me to use asynchronous code. This means I can scan for multiple devices while connecting to already-found ones and collecting data
+futures  = "0.3.31"
+
+uuid     = "1.16.0"                                     # Crate used to work with UUIDs. It helps identify Bluetooth services/devices automatically by parsing and comparing UUIDs
