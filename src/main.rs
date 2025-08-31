@@ -45,17 +45,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("🔄 Scan Round {}", scan_round);
 
             let _ = adapter_clone.stop_scan().await;
-            sleep(Duration::from_millis(400)).await;
+            sleep(Duration::from_millis(600)).await;
             if let Err(e) = adapter_clone.start_scan(scan_filter.clone()).await {
                 eprintln!("❌ Error restarting scan: {e:?}");
                 break;
             }
 
-            let round_timeout = Duration::from_secs(15);
+            let round_timeout = Duration::from_secs(60);
             let round_start = std::time::Instant::now();
 
             while round_start.elapsed() < round_timeout {
-                match timeout(Duration::from_millis(200), events.next()).await {
+                match timeout(Duration::from_millis(300), events.next()).await {
                     Ok(Some(event)) => {
                         let (id, is_discovery) = match &event {
                             CentralEvent::DeviceDiscovered(id) => (id.clone(), true),
@@ -145,7 +145,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             scan_round += 1;
-            if scan_round > 4 {
+            if scan_round > 2 {
                 println!("🏁 Completed {} scanning rounds", scan_round - 1);
                 break;
             }
@@ -172,8 +172,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ = tokio::signal::ctrl_c() => {
             println!("\n🛑 Stopping scan...");
         }
-        _ = sleep(Duration::from_secs(90)) => {
-            println!("\n⏰ Scan timeout after 90 seconds");
+        _ = sleep(Duration::from_secs(180)) => {
+            println!("\n⏰ Scan timeout after 180 seconds");
         }
     }
 
