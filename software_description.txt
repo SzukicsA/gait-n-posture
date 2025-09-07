@@ -1,9 +1,14 @@
 functions
     - Bluetooth
         - find, connect and record data streamed by shimmer3 devices
+        - record all data on shimmer3 (all measurements)
     - write data to .csv data file
-    - marker file
+    - create marker file
     - easy to use gui
+        - marker buttons
+        - timer (start with marker)
+        - metronome (maybe starts with marker)
+        - easy connection to shimmer3 devices 
     - marker placement and selection during recording
     - play metornome sound with corresponding markers
     - add which devices record which body part
