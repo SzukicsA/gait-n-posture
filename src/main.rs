@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let adapter = manager.adapters().await?.into_iter().next().ok_or_else(|| anyhow::anyhow!("no adapter"))?;
 
     // ✅ call the finder INSIDE main, after you have `adapter`
-    let maybe = find_device_by_name(&adapter, "A's S20+", 90).await?;
+    let maybe = find_device_by_name(&adapter, "Shimmer3-FC2C", 90).await?;
     match maybe {
         Some(p) => println!("✅ Found Shimmer: {:?}", p.id()),
         None => println!("❌ Not found within timeout"),
